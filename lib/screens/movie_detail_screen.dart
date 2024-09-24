@@ -25,6 +25,7 @@ class MovieDetailScreen extends StatelessWidget {
               SizedBox(
                 height: 400,
                 width: double.infinity,
+                // Showing poster of the movie here
                 child: Image.network(movieModel.poster!),
               ),
               const SizedBox(
