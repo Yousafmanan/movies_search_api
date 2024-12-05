@@ -51,7 +51,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.blueAccent,
+        backgroundColor: Colors.deepPurple,
         centerTitle: true,
         title: const Text(
           "Movie Search",
@@ -71,7 +71,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue,
+                  backgroundColor: Colors.deepPurple,
                 ),
                 // button press
                 onPressed: () {
@@ -81,7 +81,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   } else {
                     Fluttertoast.showToast(
                         msg: 'Please Provide Movie Name',
-                        backgroundColor: Colors.blue);
+                        backgroundColor: Colors.deepPurple);
                   }
                 },
                 child: const Text(
@@ -91,7 +91,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       fontSize: 15,
                       fontWeight: FontWeight.bold),
                 )),
-          const SizedBox(height: 20,),
+          const SizedBox(height: 10,),
             Expanded(child: StreamBuilder(
                 stream: stream,
                 builder: (context,snapshot){
@@ -112,18 +112,28 @@ class _HomeScreenState extends State<HomeScreen> {
                             return MovieDetailScreen(movieModel: movie,);
                           }));
                         },
-                        child: SizedBox(
-                          height: 300,
-                          width: double.infinity,
-                          child:  Image.network(movie.poster!),
+                        child: SingleChildScrollView(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              SizedBox(
+                                height: 500,
+                                width: double.infinity,
+                                child:  Image.network(movie.poster!),
+                              ),
+                              const SizedBox(height: 20,),
+                              const Text('Click on Movie Poster for more Details', style: TextStyle(color: Colors.deepPurple, fontSize: 16, fontWeight: FontWeight.bold),),
+                              const SizedBox(height: 50,)
+                            ],
+                          ),
                         ),
                       );
                     }
                   }else{
                     return const Center(child: CircularProgressIndicator(),);
                   }
-
-                }))
+                })),
           ],
         ),
       ),

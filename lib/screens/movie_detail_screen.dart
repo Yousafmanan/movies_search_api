@@ -11,9 +11,9 @@ class MovieDetailScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         iconTheme: const IconThemeData(
-          color: Colors.white,
-        ),
-        backgroundColor: Colors.blue,
+          color: Colors.white,),
+        backgroundColor: Colors.deepPurple,
+        centerTitle: true,
         title: const Text(
           'Movie Detail', style: TextStyle(color: Colors.white),),
       ),
