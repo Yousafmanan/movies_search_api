@@ -4,7 +4,6 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:http/http.dart' as https;
 import 'package:flutter/material.dart';
 import 'package:movies_search_api/models/movie_model.dart';
-
 import 'movie_detail_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -15,32 +14,33 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  var searchController = TextEditingController();
-  late StreamController streamController;
-  late Stream stream;
+  final searchController = TextEditingController();
+  late final StreamController streamController;
+  late final Stream stream;
+  bool isSearching = false;
 
   void getMovie(String name) async {
-    streamController.add('loading');
+    //streamController.add('loading');
     var url = 'https://www.omdbapi.com/?t=$name&plot=full&apikey=c24388e4';
-    var response = await https.get(Uri.parse(url));
-    print('this is status code     ${response.statusCode}');
-    if (response.statusCode == 200) {
-      var jsonData = json.decode(response.body);
-      print('This Data is working $jsonData');
-      if (jsonData['Response'] == 'True') {
-        print('This Data is working $jsonData');
-        MovieModel movieModel = MovieModel.fromJson(jsonData);
-        streamController.add(movieModel);
+    try {
+      var response = await https.get(Uri.parse(url));
+      if (response.statusCode == 200) {
+        var jsonData = json.decode(response.body);
+        if (jsonData['Response'] == 'True') {
+          streamController.add(MovieModel.fromJson(jsonData));
+        } else {
+          streamController.add('not found');
+        }
       } else {
-        Fluttertoast.showToast(msg: 'Data not found', fontSize: 15);
+        streamController.add('went wrong');
       }
-    } else {
-      Fluttertoast.showToast(msg: 'Something Went Wrong', fontSize: 15);
+    } catch (e) {
+      streamController.add('went wrong');
     }
   }
+
   @override
   void initState() {
-    // TODO: implement initState
     streamController = StreamController();
     stream = streamController.stream;
     streamController.add('empty');
@@ -48,15 +48,19 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   @override
+  void dispose() {
+    streamController.close();
+    searchController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.deepPurple,
         centerTitle: true,
-        title: const Text(
-          "Movie Search",
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-        ),
+        backgroundColor: Colors.deepPurple,
+        title: const Text('Movie Search', style: TextStyle(color: Colors.white),),
       ),
       body: Padding(
         padding: const EdgeInsets.all(8.0),
@@ -66,77 +70,68 @@ class _HomeScreenState extends State<HomeScreen> {
               controller: searchController,
               decoration: const InputDecoration(hintText: 'Search movie name here'),
             ),
-            const SizedBox(
-              height: 10,
-            ),
+            const SizedBox(height: 10),
             ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.deepPurple,
-                ),
-                // button press
-                onPressed: () {
-                  if (searchController.text.isNotEmpty) {
-                    print('Button Click');
-                    getMovie(searchController.text);
-                  } else {
-                    Fluttertoast.showToast(
-                        msg: 'Please Provide Movie Name',
-                        backgroundColor: Colors.deepPurple);
-                  }
-                },
-                child: const Text(
-                  'Search',
-                  style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 15,
-                      fontWeight: FontWeight.bold),
-                )),
-          const SizedBox(height: 10,),
-            Expanded(child: StreamBuilder(
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.deepPurple),
+              onPressed: isSearching
+                  ? null
+                  : () async {
+                if (searchController.text.trim().isNotEmpty) {
+                  setState(() => isSearching = true);
+                  getMovie(searchController.text);
+                  setState(() => isSearching = false);
+                } else {
+                  Fluttertoast.showToast(msg: 'Please provide a movie name.');
+                }
+              },
+              child: isSearching
+                  ? const CircularProgressIndicator(color: Colors.white)
+                  : const Text('Search', style: TextStyle(color: Colors.white),),
+            ),
+            const SizedBox(height: 20),
+            Expanded(
+              child: StreamBuilder(
                 stream: stream,
-                builder: (context,snapshot){
-                  if(snapshot.hasData){
-                    if(snapshot.data == 'loading'){
-                      return const Center(child: CircularProgressIndicator());
-                    }else if(snapshot.data == 'empty'){
-                      return const Center( child:  Text('Please Provide movie Name'),);
-                    }else if(snapshot.data == 'not found'){
-                      return const Center(child: Text("Movie Not Found "));
-                    }else if (snapshot.data == 'went wrong'){
-                      return const Center( child: Text('Something Went Wrong'),);
-                    }else{
-                      MovieModel movie = snapshot.data as MovieModel;
-                      return GestureDetector(
-                        onTap: (){
-                          Navigator.of(context).push(MaterialPageRoute(builder: (ctx){
-                            return MovieDetailScreen(movieModel: movie,);
-                          }));
-                        },
-                        child: SingleChildScrollView(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              SizedBox(
-                                height: 500,
-                                width: double.infinity,
-                                child:  Image.network(movie.poster!),
-                              ),
-                              const SizedBox(height: 20,),
-                              const Text('Click on Movie Poster for more Details', style: TextStyle(color: Colors.deepPurple, fontSize: 16, fontWeight: FontWeight.bold),),
-                              const SizedBox(height: 50,)
-                            ],
+                builder: (context, snapshot) {
+                  if (snapshot.hasData) {
+                    switch (snapshot.data) {
+                      case 'loading':
+                        return const Center(child: CircularProgressIndicator());
+                      case 'empty':
+                        return const Center(child: Text('Please provide a movie name.'));
+                      case 'not found':
+                        return const Center(child: Text('Movie not found.'));
+                      case 'went wrong':
+                        return const Center(child: Text('Something went wrong.'));
+                      default:
+                        MovieModel movie = snapshot.data as MovieModel;
+                        return GestureDetector(
+                          onTap: () {
+                            Navigator.of(context).push(MaterialPageRoute(
+                              builder: (ctx) => MovieDetailScreen(movieModel: movie),
+                            ));
+                          },
+                          child: SingleChildScrollView(
+                            child: Column(
+                              children: [
+                                Image.network(movie.poster ?? 'https://via.placeholder.com/400'),
+                                const SizedBox(height: 20),
+                                const Text('Click on Poster for more details',
+                                    style: TextStyle(fontSize: 16, color: Colors.deepPurple ,fontWeight: FontWeight.bold)),
+                              ],
+                            ),
                           ),
-                        ),
-                      );
+                        );
                     }
-                  }else{
-                    return const Center(child: CircularProgressIndicator(),);
                   }
-                })),
+                  return const Center(child: CircularProgressIndicator());
+                },
+              ),
+            ),
           ],
         ),
       ),
     );
   }
 }
+
