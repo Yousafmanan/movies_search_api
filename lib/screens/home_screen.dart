@@ -81,7 +81,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   getMovie(searchController.text);
                   setState(() => isSearching = false);
                 } else {
-                  Fluttertoast.showToast(msg: 'Please provide a movie name.');
+                  Fluttertoast.showToast(msg: 'Please provide a movie name.', backgroundColor: Colors.deepPurple);
                 }
               },
               child: isSearching
